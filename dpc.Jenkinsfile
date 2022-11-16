@@ -1,9 +1,9 @@
 // This is a dummy Jenkinsfile
 
-@Library("Libname1@releasever1")_
+//@Library("Libname1@releasever1")_
 
 pipeline {
-    agent none
+    agent any
 
 /*
 The agent is a quite wide option here. Originally it should not be here pinned to any node. Ideally - none. But sometimes it's impossible due to various circumstances. 
@@ -21,6 +21,13 @@ Libraries in various scopes: Global/Product/Project/Application/Purposes.
 All libraries' versions should be pinned to a particular release version. Pinning master branch isn't good idea, to avoid impacting various products/teams. 
 */    
     stages {
+        stage ("Set version") {
+            steps {
+                script {
+                    currentBuild.id = getVersion()
+                }
+            }
+        }
         stage ("Spinup build env") {
             //agent should be applied for this action. It could be dockerized
             steps {
@@ -53,7 +60,7 @@ All libraries' versions should be pinned to a particular release version. Pinnin
         stage("Func tests") {
             
             steps {
-                library "Libname1@releasever1" 
+             //   library "Libname1@releasever1" 
                 echo "Test Magic here"
                 echo "Publishing results to external DB such as ElasticSearch is good idea"
             }
@@ -82,4 +89,10 @@ All libraries' versions should be pinned to a particular release version. Pinnin
                 echo "done"
             }
         }
+}
+
+def getVersion () {
+    def ver = sh ('docker run --rm -v "$(pwd):/repo" gittools/gitversion:5.6.6 /repo /output json /showvariable FullSemVer', returnStdout: true)
+    echo "Current version is: $ver"
+    return ver
 }
