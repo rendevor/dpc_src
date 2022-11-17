@@ -22,9 +22,12 @@ All libraries' versions should be pinned to a particular release version. Pinnin
 */    
     stages {
         stage ("Set version") {
+            agent {
+                label "linux && wsl2"
+            }
             steps {
                 script {
-                    currentBuild.id = getVersion()
+                    currentBuild.displayName = getVersion()
                 }
             }
         }
