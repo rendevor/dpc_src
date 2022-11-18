@@ -56,6 +56,7 @@ All libraries' versions should be pinned to a particular release version. Pinnin
     Build magic is here.
     If it's necessarily better to wrap this step into a docker image via agent/docker option for stage. But docker should be pulled from internal artifactory by SemVer tag.
                 """
+                sh "echo \$GIT_VERSION_DOCKER > src/dpc-app-current-version.txt"
                 sh "docker build -f app.Dockerfile -t dpc-app:latest -t dpc-app:\$GIT_VERSION_DOCKER ."
             }
         }
