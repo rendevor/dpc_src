@@ -27,7 +27,9 @@ All libraries' versions should be pinned to a particular release version. Pinnin
             }
             steps {
                 script {
-                    currentBuild.displayName = getVersion()
+                    env.GIT_VERSION = getVersion()
+                    env.GIT_VERSION_DOCKER = env.GIT_VERSION.replace('+','__')
+                    currentBuild.displayName = env.GIT_VERSION
                 }
             }
         }
@@ -46,11 +48,15 @@ All libraries' versions should be pinned to a particular release version. Pinnin
                 label "my-super-laber-for-this-build" || "some-magic-another-label"
             }
             */
+            agent {
+                label "linux && wsl2"
+            }
             steps {
                 echo """
     Build magic is here.
     If it's necessarily better to wrap this step into a docker image via agent/docker option for stage. But docker should be pulled from internal artifactory by SemVer tag.
                 """
+                sh "docker build -f app.Dockerfile -t dpc-app:latest -t dpc-app:\$GIT_VERSION_DOCKER ."
             }
         }
         stage ("Destroy build host") {

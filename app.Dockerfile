@@ -2,11 +2,11 @@ FROM python:3.10
 
 WORKDIR /usr/src/app
 
-COPY requirements.txt .
+COPY src/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY hello.py .
-COPY dpc-app-current-version.txt .
+COPY src/hello.py .
+COPY src/dpc-app-current-version.txt .
 
 ENV FLASK_APP=hello
 ENV FLASK_DEBUG=1
