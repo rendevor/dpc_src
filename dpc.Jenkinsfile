@@ -137,7 +137,7 @@ All libraries' versions should be pinned to a particular release version. Pinnin
 }
 
 def getVersion () {
-    def ver = sh (script: 'docker run --rm -v "$(pwd):/repo" gittools/gitversion:5.6.6 /repo /output json /showvariable FullSemVer', returnStdout: true)
+    def ver = sh (script: 'docker run --rm -v "$(pwd):/repo" gittools/gitversion:5.6.6 /repo /output json /showvariable FullSemVer', returnStdout: true).trim()
     echo "Current version is: $ver"
     return ver
 }
