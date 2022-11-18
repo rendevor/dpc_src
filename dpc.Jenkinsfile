@@ -68,12 +68,42 @@ All libraries' versions should be pinned to a particular release version. Pinnin
             }
         }
         stage("Func tests") {
-            
-            steps {
-             //   library "Libname1@releasever1" 
-                echo "Test Magic here"
-                echo "Publishing results to external DB such as ElasticSearch is good idea"
-            }
+                parallel {
+                    stage ("Start Server") {
+                        agent {
+                           label "linux && wsl2"
+                        }   
+                        steps {
+                            script {
+                                env.APP_IMAGE_HASH = sh(script:"docker run -p 5000:5000 -d --name dpc-app-testing dpc-app:\$GIT_VERSION_DOCKER", returnStdout: true)
+                            }
+                        }
+                    }
+                    stage ("Check version") {
+                        agent {
+                           label "linux && wsl2"
+                        }   
+                        steps {
+                            sh "sleep 5"
+                            script {
+                                sh (script:"curl -s http://localhost:5000", returnStdout: true)
+                                def result = sh (script: "curl -s http://localhost:5000 | grep \$GIT_VERSION_DOCKER > /dev/null 2>&1 ; echo \$?", returnStatus: true)
+                                if (result) {
+                                    currentBuild.result = 'UNSTABLE'
+                                }
+                            }
+                        }
+                    }
+                }
+                post {
+                    always {
+                        node ('linux && wsl2') {
+                            sh "docker stop dpc-app-testing"
+                            sh "docker container rm dpc-app-testing"
+                        }
+                    }
+                }
+                
         }
         stage("Safety and Security") {
             // when 
@@ -84,8 +114,13 @@ All libraries' versions should be pinned to a particular release version. Pinnin
         }
         stage("Delivery") {
             // Upload artifacts and build info into Artifactory/Nexus/smb/whatever. For scanning also could be used X-Ray Artifactory feature, if this is enabled
+            agent {
+                label "linux && wsl2"
+            }  
             steps {
-                echo "Uploading"
+                sh "docker save -o dpc-app-\$GIT_VERSION.image dpc-app:\$GIT_VERSION_DOCKER"
+                sh "gzip dpc-app-\$GIT_VERSION.image"
+                archiveArtifacts artifacts: "dpc-app-${env.GIT_VERSION}.image.gz", fingerprint: true, followSymlinks: false
             }
         }
         stage("Deploy") {
